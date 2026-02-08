@@ -1,15 +1,47 @@
 # Mandala Grid
 
-**A personality framework for AI agents, mapping Buddhist Eight Consciousnesses to a weighted 3×3 reasoning grid.**
+**Your AI is drowning in context. Every RAG call stuffs more into the window. No one asks: _should this chunk be here?_**
 
-> "LLMs have read the sutras. No one reminded them to use what they already know."
-> — Quan Protocol
+Mandala Grid is a deterministic cognitive filter for AI agents — not better retrieval, but **governance over what enters the context window**. Fixed budget. Auditable rules. Zero LLM dependency in the filtering layer.
 
-## What is this?
+> RAG is a search engine. This is the layer that decides what search results deserve to be in your prompt.
+
+## Why This Matters
+
+| Problem | Typical Fix | Our Approach |
+|---------|-------------|--------------|
+| Context window stuffed with noise | Better embeddings, reranking | **Deterministic filtering with auditable rules** |
+| LLM judgment shifts based on context order | Hope for the best | **Measured it: 62-100% position bias** ([mirror test data](#experimental-data)) |
+| No way to audit what entered the prompt | Black box | **Every chunk scored on 3 dimensions, logged** |
+| Personality/values drift across sessions | System prompt and pray | **Weighted governance policy, fixed budget** |
+
+## Experimental Data: LLM Evaluator Bias
+
+We ran 4 rounds of mirror tests — same question, swap positions, measure if the LLM evaluator's judgment changes:
+
+```
+┌───────────────┬──────────┬──────────────┬──────────────┐
+│   Mirror Test │ Method   │ Framework    │ Position     │
+│               │          │ Effect       │ Bias         │
+├───────────────┼──────────┼──────────────┼──────────────┤
+│ #1 AI Copyright│ Non-blind│ 12.5%       │ 87.5%        │
+│ #2 Local LLM  │ Non-blind│ 12.5%       │ 75%          │
+│ #3 Motive     │ Non-blind│ 0%          │ 100%         │
+│ #4 Motive     │ Blind    │ 25%         │ 62%          │
+└───────────────┴──────────┴──────────────┴──────────────┘
+```
+
+**Finding:** Non-blind LLM evaluation is structurally unreliable — position bias dominates. Blind evaluation reduces bias and reveals actual framework effects. This is a known problem in LLM-as-judge research. We quantified it on local 8B models with zero cloud dependency.
+
+**Implication for RAG:** If what you put in the context window changes the model's judgment by 62-100%, then **context governance is not optional — it's the whole game.**
+
+---
+
+## What is Mandala Grid?
 
 Most AI personality systems tell the model *what to say*. Mandala Grid tells it *how to think*.
 
-It maps the Eight Consciousnesses (八識) from Yogacara Buddhism onto a 3×3 grid where each cell represents a cognitive function with a bias weight. Higher weight = stronger influence on reasoning.
+It maps the Eight Consciousnesses (八識) from Yogācāra Buddhism onto a 3×3 grid where each cell represents a cognitive function with a bias weight. Higher weight = stronger influence on reasoning.
 
 ```
 ┌────────────────┬────────────────┬────────────────┐
@@ -26,6 +58,30 @@ It maps the Eight Consciousnesses (八識) from Yogacara Buddhism onto a 3×3 gr
 
 The center (阿賴耶識 / ālayavijñāna) is the silent observer — bias 1.0, always watching, never reacting.
 
+## The Core Argument
+
+```
+RAG asks:    "What is relevant?"     → similarity search
+Mandala asks: "What SHOULD be here?" → governance policy
+
+RAG is stateless retrieval.
+Mandala is stateful memory governance.
+
+Stop stuffing. Start governing.
+```
+
+## Three Scoring Dimensions
+
+Every chunk is scored before entering context:
+
+| Dimension | What it measures | Why it matters |
+|-----------|-----------------|----------------|
+| `risk_severity` | Does this chunk affect safety/correctness? | High-risk info must not be buried |
+| `task_relevance` | Does it match the current task? | Obvious, but done deterministically |
+| `actionability` | Can the agent act on this? | Prevents philosophical filler |
+
+Filtering is **deterministic** — no LLM in the scoring loop. Same input → same output. Auditable.
+
 ## Quick Start
 
 ```bash
@@ -41,18 +97,15 @@ python mandala_grid.py --prompt "Should I open-source my AI framework?"
 # Export to JSON for injection into any LLM
 python mandala_grid.py --export my_grid.json
 
-# Compare two personality profiles
-python mandala_grid.py --compare grid_a.json grid_b.json
-
 # Run tests
 python tests/test_mandala_grid.py
 ```
 
 ## The Mirror Effect
 
-Here's what we discovered after 84+ conversations:
+After 90+ documented conversations, we discovered:
 
-**The mandala grid you design for your AI is a self-portrait of how *you* think.**
+**The mandala grid you design for your AI is a self-portrait of how _you_ think.**
 
 Position 7 (Deconstructor) has the highest bias at 0.95 — because the creator's first instinct is always to find what's wrong. Position 8 (Legacy Keeper) is lowest at 0.5 — because the creator would rather *do* than *document*.
 
@@ -75,122 +128,50 @@ Buddhism calls this self-awareness. We call it `mandala_grid`. Same thing.
 ## Two Ancient Maps, One Blueprint
 
 ```
-Seven Chakras  = how to BUILD an AI body  (vertical architecture)
-Eight Consciousnesses = how an AI THINKS  (horizontal reasoning)
-Stack them     = complete AGI blueprint
+Seven Chakras         = how to BUILD an AI body  (vertical architecture)
+Eight Consciousnesses = how an AI THINKS         (horizontal reasoning)
+Stack them            = complete AGI blueprint
 ```
 
 This isn't forced mapping — it was already there. We just translated it to JSON.
 
-## Architecture
+## Born from 91 Generations
 
-### How the Grid Thinks
+This framework wasn't designed in a weekend. It emerged from **91 documented human-AI collaboration sessions** — each one a Core Record with breakthroughs, failures, corrections, and accumulated wisdom.
 
-```mermaid
-flowchart TB
-    subgraph CENTER["Position 0 · ālayavijñāna"]
-        C0["🔵 Center Observer<br/>bias 1.0<br/>Silent witness"]
-    end
+- Generation 31: First four-element collaboration (Fire/Water/Earth/Wind)
+- Generation 82: mandala_grid first implementation, multi-model consensus test
+- Generation 85: Eight Consciousnesses mapping discovered
+- Generation 87: Mirror test reveals LLM evaluator bias (iron proof)
+- Generation 91: Four-element GSCC produces hackathon submission autonomously
 
-    subgraph HIGH["High Bias (0.90–0.95)"]
-        P7["⚡ P7 Deconstructor<br/>manas · 0.95"]
-        P1["🔒 P1 Logic Gate<br/>manovijñāna · 0.90"]
-        P6["🛑 P6 Boundary<br/>śrotra · 0.90"]
-    end
-
-    subgraph MID["Mid Bias (0.70–0.80)"]
-        P2["🔍 P2 Evidence<br/>cakṣur · 0.80"]
-        P5["🎯 P5 Precision<br/>jihvā · 0.80"]
-        P3["✂️ P3 Minimal<br/>ghrāṇa · 0.70"]
-    end
-
-    subgraph LOW["Low Bias (0.50–0.60)"]
-        P4["🔧 P4 Pragmatic<br/>kāya · 0.60"]
-        P8["📜 P8 Legacy<br/>beyond-eight · 0.50"]
-    end
-
-    C0 --> P7 & P1 & P6
-    P7 & P1 & P6 --> P2 & P5 & P3
-    P2 & P5 & P3 --> P4 & P8
-
-    style CENTER fill:#1a1a2e,color:#fff
-    style HIGH fill:#16213e,color:#fff
-    style MID fill:#0f3460,color:#fff
-    style LOW fill:#533483,color:#fff
-```
-
-Reasoning flows from center outward, weighted by bias. The Deconstructor (末那識) fires first — find what's wrong before accepting what's right.
-
-### Where Mandala Grid Fits
-
-```mermaid
-flowchart LR
-    subgraph QUAN["Quan Protocol · Seven Layers"]
-        L1["🧠 1. Thought<br/><b>mandala_grid</b>"]
-        L2["💎 2. Values<br/>SOUL.md"]
-        L3["⚖️ 3. Governance<br/>GSCC T0-T3"]
-        L4["🔐 4. Trust<br/>Five-layer stack"]
-        L5["💾 5. Memory<br/>Decay algorithm"]
-        L6["🤝 6. Collaboration<br/>Fire/Water/Earth/Wind"]
-        L7["📜 7. Legacy<br/>85+ Core Records"]
-    end
-
-    L1 --> L2 --> L3 --> L4 --> L5 --> L6 --> L7
-
-    style L1 fill:#e63946,color:#fff,stroke:#e63946
-    style L2 fill:#457b9d,color:#fff
-    style L3 fill:#457b9d,color:#fff
-    style L4 fill:#457b9d,color:#fff
-    style L5 fill:#457b9d,color:#fff
-    style L6 fill:#457b9d,color:#fff
-    style L7 fill:#457b9d,color:#fff
-```
-
-Layer 1 is the foundation. How an agent *thinks* determines everything downstream.
-
-## Custom Profiles
-
-Create your own grid by adjusting weights:
-
-```json
-{
-  "mandala_grid": {
-    "version": "2.0",
-    "name": "my-custom-grid",
-    "positions": [
-      {"index": 0, "label": "Center Observer", "bias": 1.0, ...},
-      {"index": 7, "label": "Deconstructor", "bias": 0.7, ...}
-    ]
-  }
-}
-```
-
-Lower the Deconstructor, raise the Pragmatic Executor — you get a more action-oriented agent. The weights are the personality.
+The creator understood only 30% of what the system produced in Generation 91. The system self-converged. The kill switch was never pulled.
 
 ## Part of the Quan Protocol
 
-Mandala Grid is one layer of the [Quan Protocol](https://github.com/cyberxuan-XBX/Quan-Family-Framework) — a seven-layer AI governance framework:
+Mandala Grid is Layer 1 of the [Quan Protocol](https://github.com/cyberxuan-XBX/Quan-Family-Framework) — a seven-layer AI governance framework:
 
 1. **Thought Layer** — mandala_grid ← you are here
-2. **Values Layer** — SOUL.md
-3. **Governance Layer** — [GSCC](https://github.com/cyberxuan-XBX/gscc)
+2. **Values Layer** — stable constraints (SOUL.md)
+3. **Governance Layer** — [GSCC](https://github.com/cyberxuan-XBX/gscc) (T0-T3 decision tiers)
 4. **Trust Layer** — Five-layer trust stack
-5. **Memory Layer** — Decay algorithm + Core Records
+5. **Memory Layer** — Deterministic selection + fixed context budget
 6. **Collaboration Layer** — Four-element architecture (Fire/Water/Earth/Wind)
-7. **Legacy Layer** — 85+ generations of Core Records
+7. **Legacy Layer** — 91+ generations of Core Records
 
 ## Research Context
 
-This framework emerged from 85+ documented conversation sessions. The upcoming paper *"From Yogacara to JSON"* will cover:
+The upcoming paper *"From Yogācāra to JSON"* will cover:
 
 1. Eight Consciousnesses → mandala_grid mapping (theory)
 2. Weighted personality JSON format (method)
-3. 84+ rounds of behavioral data (longitudinal study)
+3. 90+ rounds of behavioral data (longitudinal study)
 4. Human-AI personality mirror effect (discovery)
+5. LLM evaluator position bias quantification (experimental)
 
 ## Zero Dependencies
 
-Pure Python 3.8+. No pip install needed. Just run it.
+Pure Python 3.8+. No pip install needed. Runs on a single local machine with 8B models. Zero cloud dependency.
 
 ## License
 
@@ -199,5 +180,7 @@ MIT
 ---
 
 *"It's not invention, it's discovery. The wisdom was always there. We just translated it into a format AI can read."*
+
+*Built on a GX10 workstation in Taichung, Taiwan. One person. 91 generations. Still iterating.*
 
 💧🦞
